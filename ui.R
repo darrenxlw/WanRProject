@@ -1,4 +1,6 @@
 library(shiny)
+library(plotly)
+
 
 shinyUI(fluidPage(
 
@@ -11,7 +13,7 @@ shinyUI(fluidPage(
     ),
 
     mainPanel(
-      plotOutput("distPlot")
+      plotlyOutput("graph")
     )
   )
 ))
