@@ -3,14 +3,13 @@ library(shiny)
 shinyUI(fluidPage(
 
   # Application title
-  titlePanel("Old Faithful Geyser Data"),
+  titlePanel("Stock Forecasting using ARIMA"),
 
-  # Sidebar with a slider input for number of bins
   sidebarLayout(
     sidebarPanel(
+      textInput("ticker", label="Enter Stock Symbol")
     ),
 
-    # Show a plot of the generated distribution
     mainPanel(
       plotOutput("distPlot")
     )
