@@ -8,9 +8,32 @@ library(dplyr)
 
 library(shiny)
 
+# #TODO
+# more config options
+# explaining ARIMA Forecasting
+# add basic info from webscraping, targets, etc
+# compare multiple
+# reactive
+
 shinyServer(function(input, output) {
   
+  validate_input <- function(t){
+    tmp <- tryCatch(
+      getSymbols(t),
+      error=function(e){return("error")},
+      warning=function(e){return("warning")}
+    )
+    validate(
+      need(input$ticker != "" && length(input$ticker) <= 4 && tmp != "warning" && tmp != "error", "Please enter valid stock symbol")
+    ) 
+  }
+  
   clean_data <- function(t){
+    tryCatch(
+      eq_ts <- getSymbols(t,auto.assign = FALSE),
+      error=function(e){message("ERROOOR")},
+      warning=function(e){message("WAAARN")}
+    )
     #load timeseries of stock using quantmod
     eq_ts <- getSymbols(t,auto.assign = FALSE)
     eq_ts <- to.weekly(eq_ts)
@@ -35,12 +58,12 @@ shinyServer(function(input, output) {
     return(eq_out)
   }
   
-  plot_ticker <- function(df){
+  plot_ticker <- function(df,t){
     #plot the price
     plt_price <- df %>% 
       plot_ly(x=~Date, type="candlestick",
               open=~Open, close=~Close, 
-              high=~High, low=~Low, name=input$ticker,
+              high=~High, low=~Low, name=t,
               decreasing=list(color="#d66a60"), 
               increasing=list(color="#9bf2a2")) %>% 
       add_lines(y=~up, name="Bollinger Bands", line=list(width=0.25, color="#29C37B"), hoverinfo="none", showlegend=FALSE) %>% 
@@ -59,7 +82,7 @@ shinyServer(function(input, output) {
     
     #subplot
     plt_ts <- subplot(plt_price, plt_vol, heights=c(0.8,0.2), nrows=2, shareX=TRUE, titleY=TRUE) %>% 
-      layout(title=paste(input$ticker, " - ", Sys.Date()),
+      layout(title=paste(t, " - ", Sys.Date()),
              legend=list(orientation="h",
                          xanchor="center", x = 0.5, y=1.5,
                          font = list(size = 5),
@@ -69,7 +92,9 @@ shinyServer(function(input, output) {
   }
 
   output$graph <- renderPlotly({
-    plot_ticker(clean_data(input$ticker))
+    validate_input(input$ticker)
+    
+    plot_ticker(clean_data(toupper(input$ticker)), toupper(input$ticker))
     #plot_ticker(input$ticker)
   })
 
