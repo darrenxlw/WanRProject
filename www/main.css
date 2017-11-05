@@ -5,11 +5,13 @@ html, body {
   overflow: hidden;
   margin: 0;
   font-family: Roboto;
-  letter-spacing: 2px; }
+  letter-spacing: 2px;
+  box-sizing: border-box; }
 
 .container-fluid {
   color: black;
-  padding: 0; }
+  padding: 0;
+  position: relative; }
   .container-fluid h2 {
     margin: 0;
     padding: 12px;
@@ -17,6 +19,16 @@ html, body {
     color: #fff;
     font-weight: 300;
     background: #13b0bf; }
+  .container-fluid .toggle_info {
+    position: absolute;
+    text-align: center;
+    cursor: pointer;
+    top: 6px;
+    right: 9px;
+    color: #13b0bf;
+    font-weight: 700;
+    border-radius: 50%;
+    border: none; }
   .container-fluid .row .col-sm-4 form {
     height: 100vh;
     border-radius: 0;
@@ -63,14 +75,27 @@ html, body {
         margin-top: 0; }
     .container-fluid .row .col-sm-4 form .slider {
       margin-bottom: 0; }
-  .container-fluid .row .col-sm-8 {
+  .container-fluid .row .col-sm-8 .mainpanel {
+    height: 94vh;
+    overflow-y: scroll;
     padding: 12px 42px 0 0; }
-    .container-fluid .row .col-sm-8 svg {
-      width: 100%; }
-    .container-fluid .row .col-sm-8 .shiny-output-error {
-      color: #1ec5db;
-      font-weight: 700; }
-    .container-fluid .row .col-sm-8 .y2tick text {
-      letter-spacing: initial; }
+  .container-fluid .row .col-sm-8 svg {
+    width: 100%; }
+  .container-fluid .row .col-sm-8 .shiny-output-error {
+    color: #1ec5db;
+    font-weight: 700; }
+  .container-fluid .row .col-sm-8 .y2tick text {
+    letter-spacing: initial; }
+  .container-fluid .row .col-sm-8 .flexbox {
+    display: inline-flex; }
+    .container-fluid .row .col-sm-8 .flexbox div {
+      padding: 8px;
+      padding-bottom: 32px; }
+  .container-fluid .row .col-sm-8 #stock_name {
+    font-weight: 700; }
+  .container-fluid .row .col-sm-8 table {
+    font-size: 12px;
+    padding-bottom: 24px;
+    white-space: nowrap; }
 
 /*# sourceMappingURL=main.css.map */

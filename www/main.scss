@@ -7,10 +7,12 @@ html, body{
 	margin: 0;
 	font-family: Roboto;
 	letter-spacing: 2px;
+	box-sizing: border-box;
 }
 .container-fluid{
 	color: black;
 	padding: 0;
+	position: relative;
 	h2{
 		margin: 0;
 		padding: 12px;
@@ -19,6 +21,8 @@ html, body{
 		font-weight: 300;
 		background: #13b0bf;
 	}
+	.toggle_info{position: absolute; text-align: center; cursor: pointer; top: 6px; right: 9px; 
+		color:#13b0bf; font-weight:700; border-radius: 50%; border: none;}
 	.row{
 		.col-sm-4{
 			form{
@@ -52,10 +56,21 @@ html, body{
 			}
 		}
 		.col-sm-8{
-			padding: 12px 42px 0 0;
+			.mainpanel{
+				height: 94vh;
+				overflow-y:scroll;
+				padding: 12px 42px 0 0;
+			}
 			svg{width: 100%;}
 			.shiny-output-error{color: #1ec5db; font-weight: 700;}
 			.y2tick text{letter-spacing:initial;}
+			.flexbox{display: inline-flex; div{padding: 8px; padding-bottom:32px;}}
+			#stock_name{font-weight: 700;}
+			table{
+				font-size: 12px;
+				padding-bottom:24px;
+				white-space: nowrap
+			}
 		}
 	}
 }
