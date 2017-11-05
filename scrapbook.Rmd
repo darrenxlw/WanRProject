@@ -1,3 +1,5 @@
+```{r}
+#libs
 library(plotly)
 library(quantmod)
 library(TTR)
@@ -5,84 +7,56 @@ library(tseries)
 library(forecast)
 library(glue)
 library(dplyr)
+```
 
-library(shiny)
 
-# #TODO
-# more config options
-# explaining ARIMA Forecasting
-# add basic info from webscraping, targets, etc
-# reactive
-
-shinyServer(function(input, output) {
-  
-  stock_ticker <- eventReactive(input$action, {
-    return(input$ticker)
-  })
-  
-  validate_input <- function(t){
-    tmp <- tryCatch(
-      getSymbols(t),
-      error=function(e){return("error")},
-      warning=function(e){return("warning")}
-    )
-    validate(
-      need(input$ticker != "" && length(input$ticker) <= 4 && tmp != "warning" && tmp != "error", "Please enter a valid stock symbol"),
-      {if(input$ticker!="") need(length(input$ticker) <= 4 && tmp != "warning", paste(toupper(input$ticker), "is not a valid symbol."))}
-    ) 
-  }
-  
-  clean_data <- function(t){
+```{r}
+clean_data <- function(t){
     #load timeseries of stock using quantmod
+    #t="pypl"
     eq_ts <- getSymbols(t,auto.assign = FALSE)
-    if(input$radio==2){
-      eq_ts <- to.weekly(eq_ts)
-    }else if(input$radio==3){
-      eq_ts <- to.monthly(eq_ts)
-    }else{
-      eq_ts <- to.daily(eq_ts)
-    }
-    
+    eq_ts <- to.monthly(eq_ts)
+    View(eq_ts)
+    eq_ts <- to.weekly(eq_ts)
     eq_df <- data.frame(Date=as.Date(index(eq_ts)),coredata(eq_ts))
     #clean up column names
     tmpnames <- unlist(strsplit(colnames(eq_df),"\\."))
     colnames(eq_df) <- tmpnames[tmpnames!="eq_ts"]
+    View(eq_df)
     #Create Bollinger Bands from TTR Package
     bbands <- BBands(eq_df[,c("High", "Low", "Close")])
     #Ignore Data older than 2 years
     cdate <- as.POSIXlt(Sys.Date())
-    cdate$mon <- cdate$mon-input$months_trailing
+    cdate$year <- cdate$year-2
     eq_df <- subset(cbind(eq_df, data.frame(bbands[,1:3])), Date >= as.Date(cdate))
     #Create univariate timeseries for arima modeling
     uv_ts <- eq_ts[,"eq_ts.Close"]
     #Use forecast package to create auto.arima and forecast development at different confidence levels
     eq_arima <- auto.arima(uv_ts)
-    fc <- forecast(eq_arima, h=26, level=c(input$fc_confidence_1,input$fc_confidence_2))
+    fc <- forecast(eq_arima, h=26, level=c(50,80,95))
     fc_df <- data.frame(fc)
     fc_df$Date <- c(Date=seq(Sys.Date(), by="weeks", length=27)[-1])
     eq_out <- merge(eq_df, fc_df,all=TRUE)
     return(eq_out)
-  }
-  
-  plot_ticker <- function(df,t){
+}
+View(fc_df)
+  #df <- eq_out
+  plot_ticker <- function(df){
     #plot the price
     plt_price <- df %>% 
       plot_ly(x=~Date, type="candlestick",
               open=~Open, close=~Close, 
-              high=~High, low=~Low, name=t,
+              high=~High, low=~Low, name="PYPL",
               decreasing=list(color="#d66a60"), 
               increasing=list(color="#9bf2a2")) %>% 
       add_lines(y=~up, name="Bollinger Bands", line=list(width=0.25, color="#29C37B"), hoverinfo="none", showlegend=FALSE) %>% 
       add_lines(y=~dn, name="Bollinger Bands", line=list(width=0.25, color="#29C37B"), hoverinfo="none", showlegend=FALSE) %>% 
       add_lines(y=~mavg, name="Moving Avg", line=list(width=0.5, color="#29C37B"), hoverinfo="none") %>% 
-      add_ribbons(ymin=eval(parse(text=paste("~Lo.", toString(max(input$fc_confidence_1,input$fc_confidence_2)), sep=""))),
-                  ymax=eval(parse(text=paste("~Hi.", toString(max(input$fc_confidence_1,input$fc_confidence_2)), sep=""))),
-                  fillcolor="#d5e8e5", line=list(width=0.5, color="#b9c9c6")) %>% 
-      add_ribbons(ymin=eval(parse(text=paste("~Lo.", toString(min(input$fc_confidence_1,input$fc_confidence_2)), sep=""))), 
-                  ymax=eval(parse(text=paste("~Hi.", toString(min(input$fc_confidence_1,input$fc_confidence_2)), sep=""))),
-                  fillcolor="#a0dbd0", line=list(width=0.5, color="#5fb7a7")) %>% 
+      add_ribbons(ymin=~Lo.95, ymax=~Hi.95,   fillcolor="#d5e8e5", line=list(width=0.5, color="#b9c9c6")) %>% 
+      add_ribbons(ymin=~Lo.80, ymax=~Hi.80,   fillcolor="#a0dbd0", line=list(width=0.5, color="#80b2a9")) %>% 
+      add_ribbons(ymin=eval(parse(text=paste("~Lo.", toString(50), sep=""))), ymax=~Hi.50,   fillcolor="#7dd1c2", line=list(width=0.5, color="#5fb7a7")) %>% 
       add_lines(y=~Point.Forecast, name="Forecast", line=list(width=1, color="FF5733")) %>% 
-      layout(yaxis=list(title="price usd"))
+      layout(yaxis=list(title="price"))
     
     #plot volume
     plt_vol <- df %>% 
@@ -91,17 +65,29 @@ shinyServer(function(input, output) {
     
     #subplot
     plt_ts <- subplot(plt_price, plt_vol, heights=c(0.8,0.2), nrows=2, shareX=TRUE, titleY=TRUE) %>% 
-      layout(title=paste(t, " - ", Sys.Date()), xaxis=list(title=""),
+      layout(title=paste("PYPL", " - ", Sys.Date()),
              legend=list(orientation="h",
                          xanchor="center", x = 0.5, y=1.5,
                          font = list(size = 5),
-                         bgcolor = 'white'), showlegend=FALSE) %>% 
-      config(displayModeBar = FALSE)
+                         bgcolor = 'white'), showlegend=FALSE)
+    plt_ts
     return(plt_ts)
   }
+```
 
-  output$graph <- renderPlotly({
-    validate_input(stock_ticker())
-    plot_ticker(clean_data(toupper(stock_ticker())), toupper(stock_ticker()))
-  })
-})
+
+
+```{r}
+plot_ticker(clean_data("PYPL"))
+
+```
+
+```{r}
+class(getSymbols("aohj"))
+a <- tryCatch(
+  getSymbols("pypl"),
+  error=function(e){return(1)},
+  warning=function(w){return(10)}
+)
+```
+

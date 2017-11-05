@@ -16,30 +16,61 @@ html, body {
     font-size: 18px;
     color: #fff;
     font-weight: 300;
-    background: #003a56; }
+    background: #13b0bf; }
   .container-fluid .row .col-sm-4 form {
     height: 100vh;
     border-radius: 0;
-    border: 2px solid #003a56;
-    border-top: 0; }
+    border: 2px solid #13b0bf;
+    padding-bottom: 24px;
+    border-top: 0;
+    overflow: scroll; }
     .container-fluid .row .col-sm-4 form input[type="text"] {
       border-radius: 0;
-      border: 2px solid #003a56; }
+      border: 2px solid #13b0bf; }
     .container-fluid .row .col-sm-4 form #action {
       width: 100%;
       font-weight: 700;
       color: #fff;
-      background: #003a56;
-      border-radius: 0; }
+      background: #13b0bf;
+      border-radius: 0;
+      letter-spacing: 4px; }
       .container-fluid .row .col-sm-4 form #action:hover {
         opacity: 0.8; }
     .container-fluid .row .col-sm-4 form .config {
       padding: 18px 12px 8px 12px;
-      border-bottom: 1px solid #003a56;
+      border-bottom: 1px solid #13b0bf;
       display: block; }
+      .container-fluid .row .col-sm-4 form .config .button {
+        float: right;
+        font-weight: 700;
+        background: transparent;
+        border: none;
+        cursor: pointer; }
+    .container-fluid .row .col-sm-4 form h6 {
+      margin-top: 18px;
+      font-weight: 700; }
+    .container-fluid .row .col-sm-4 form #radio label {
+      display: block; }
+    .container-fluid .row .col-sm-4 form #radio .shiny-options-group {
+      width: 100%;
+      display: inline-block;
+      display: inline-flex; }
+    .container-fluid .row .col-sm-4 form #radio .radio {
+      flex: 1 1 0;
+      margin: 10px 0;
+      font-size: 10px; }
+      .container-fluid .row .col-sm-4 form #radio .radio input {
+        margin-top: 0; }
+    .container-fluid .row .col-sm-4 form .slider {
+      margin-bottom: 0; }
   .container-fluid .row .col-sm-8 {
     padding: 12px 42px 0 0; }
     .container-fluid .row .col-sm-8 svg {
       width: 100%; }
+    .container-fluid .row .col-sm-8 .shiny-output-error {
+      color: #1ec5db;
+      font-weight: 700; }
+    .container-fluid .row .col-sm-8 .y2tick text {
+      letter-spacing: initial; }
 
 /*# sourceMappingURL=main.css.map */
