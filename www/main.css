@@ -97,5 +97,9 @@ html, body {
     font-size: 12px;
     padding-bottom: 24px;
     white-space: nowrap; }
+  .container-fluid .row .col-sm-8 #weblink {
+    font-size: 10px; }
+  .container-fluid .row .col-sm-8 .gtitle {
+    font-weight: 700 !important; }
 
 /*# sourceMappingURL=main.css.map */

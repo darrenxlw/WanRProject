@@ -6,7 +6,7 @@ shinyUI(fluidPage(
   theme="main.css",
 
   # Application title
-  titlePanel("Stock Forecasting using ARIMA"),
+  titlePanel("Stock Price Forecasting using ARIMA"),
   actionButton("modal", "?", class="toggle_info"),
 
   sidebarLayout(
@@ -32,9 +32,10 @@ shinyUI(fluidPage(
       div(class="mainpanel",
         plotlyOutput("graph"),
         textOutput("stock_name"),
+        uiOutput("weblink"),
         div(class="flexbox",
-        tableOutput("summary"),
-        textOutput("description")
+          tableOutput("summary"),
+          textOutput("description")
         )
       ),
       tags$head(tags$script(src="main.js"))

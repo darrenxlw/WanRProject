@@ -6,7 +6,6 @@ library(forecast)
 library(glue)
 library(dplyr)
 library(rvest)
-
 library(shiny)
 
 shinyServer(function(input, output) {
@@ -17,6 +16,9 @@ shinyServer(function(input, output) {
   webdata <- reactive({
     read_html(glue("http://www.nasdaq.com/symbol/{tolower(stock_ticker())}"))
   })
+  url_n <- reactive({
+    a("nasdaq.com", href=glue("http://www.nasdaq.com/symbol/{tolower(stock_ticker())}"))
+  })
   validate_input <- function(t){
     tmp <- tryCatch(
       getSymbols(t),
@@ -24,8 +26,8 @@ shinyServer(function(input, output) {
       warning=function(e){return("warning")}
     )
     validate(
-      need(input$ticker != "" && length(input$ticker) <= 4 && tmp != "warning" && tmp != "error", "Please enter a valid stock symbol"),
-      {if(input$ticker!="") need(length(input$ticker) <= 4 && tmp != "warning", paste(toupper(input$ticker), "is not a valid symbol."))}
+      need(stock_ticker() != "" && length(stock_ticker()) <= 4 && tmp != "warning" && tmp != "error", "Please enter a valid stock symbol"),
+      {if(stock_ticker()!="") need(length(stock_ticker()) <= 4 && tmp != "warning", paste(toupper(stock_ticker()), "is not a valid symbol."))}
     ) 
   }
   
@@ -127,14 +129,21 @@ shinyServer(function(input, output) {
   }
 
   output$graph <- renderPlotly({
-    validate_input(stock_ticker())
-    plot_ticker(clean_data(toupper(stock_ticker())), toupper(stock_ticker()))
+    withProgress(message = 'Rendering plot', value = 0, {
+      validate_input(stock_ticker())
+      plot_ticker(clean_data(toupper(stock_ticker())), toupper(stock_ticker()))
+    })
   })
   output$stock_name <- renderText({
     scrape_name(stock_ticker())
   })
+  output$weblink <- renderUI({
+    tagList("data taken from:", url_n())
+  })
   output$summary <- renderTable({
-    scrape_info(stock_ticker())
+    withProgress(message = 'Scraping Web', value = 0, {
+      scrape_info(stock_ticker())
+    })
   }, include.colnames=FALSE)
   output$description <- renderText({
     scrape_text(stock_ticker())

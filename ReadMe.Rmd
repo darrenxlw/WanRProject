@@ -1,0 +1,92 @@
+---
+title: "Stock Price Forecasting using ARIMA"
+description: "R Project Documentation"
+author: Darren Wan
+output: html_notebook
+---
+
+**This notebook serves documentation purposes for the R Project.**
+
+A working version is online at [shinyapps.io](https://darrenxlw.shinyapps.io/wanrproject/) and the repository for the project can be found on [Github](https://github.com/darrenxlw/WanRProject).
+
+The shiny app uses a number of R packages to plot and forecast the movements of stock prices.
+
+```{r}
+library(plotly)
+library(quantmod)
+library(TTR)
+library(tseries)
+library(forecast)
+library(glue)
+library(dplyr)
+library(rvest)
+library(shiny)
+```
+
+The `quantmod` package allows the user to load time series data of stock prices from different sources with the default set to yahoo. The time series gets cleaned up in the `clean_data(t)` function which returns a dataframe with the relevant data according to the user's configuration. Bollinger Bands, a common tool to indicate volatility through the moving average, upper and lower bands, are added using the `TTR` package.
+More importantly, the auto.arima function of the `forecast` package allows for forecasting using the Autoregressive integrated moving average and sets the parameters automatically for an optimal model.
+
+```{r}
+eq_ts <- getSymbols("PYPL",auto.assign = FALSE)
+eq_ts <- to.weekly(eq_ts)
+eq_df <- data.frame(Date=as.Date(index(eq_ts)),coredata(eq_ts))
+tmpnames <- unlist(strsplit(colnames(eq_df),"\\."))
+colnames(eq_df) <- tmpnames[tmpnames!="eq_ts"]
+bbands <- BBands(eq_df[,c("High", "Low", "Close")])
+cdate <- as.POSIXlt(Sys.Date())
+cdate$year <- cdate$year-2
+eq_df <- subset(cbind(eq_df, data.frame(bbands[,1:3])), Date >= as.Date(cdate))
+uv_ts <- eq_ts[,"eq_ts.Close"]
+eq_arima <- auto.arima(uv_ts)
+fc <- forecast(eq_arima, h=26, level=c(80,95))
+fc_df <- data.frame(fc)
+fc_df$Date <- c(Date=seq(Sys.Date(), by="weeks", length=27)[-1])
+eq_out <- merge(eq_df, fc_df,all=TRUE)
+eq_out
+```
+
+The cleaned up dataframe gets passed to the `plot_ticker` which creates the plot using the `plotly` library. It plots a candlestick chart for the past price movements, the previously calculated Bollinger Bands, as well as the predicted prices surrounded by configurable confidence intervals.
+
+```{r}
+plt_price <- eq_out %>% 
+plot_ly(x=~Date, type="candlestick",
+        open=~Open, close=~Close, 
+        high=~High, low=~Low, name="PYPL",
+        decreasing=list(color="#d66a60"), 
+        increasing=list(color="#9bf2a2")) %>% 
+add_lines(y=~up, name="Bollinger Bands", line=list(width=0.25, color="#29C37B"), hoverinfo="none", showlegend=FALSE) %>% 
+add_lines(y=~dn, name="Bollinger Bands", line=list(width=0.25, color="#29C37B"), hoverinfo="none", showlegend=FALSE) %>% 
+add_lines(y=~mavg, name="Moving Avg", line=list(width=0.5, color="#29C37B"), hoverinfo="none") %>% 
+add_ribbons(ymin=~Lo.95, ymax=~Hi.95,   fillcolor="#d5e8e5", line=list(width=0.5, color="#b9c9c6")) %>% 
+add_ribbons(ymin=~Lo.80, ymax=~Hi.80,   fillcolor="#a0dbd0", line=list(width=0.5, color="#80b2a9")) %>% 
+add_lines(y=~Point.Forecast, name="Forecast", line=list(width=1, color="FF5733")) %>% 
+layout(yaxis=list(title="price"))
+
+#plot volume
+plt_vol <- eq_out %>% 
+plot_ly(x=~Date, y=~Volume, name="Volume", type="bar", marker=list(color="#10acb5")) %>% 
+layout(yaxis=list(title="vol", tickfont=list(size=8)))
+
+#subplot
+plt_ts <- subplot(plt_price, plt_vol, heights=c(0.8,0.2), nrows=2, shareX=TRUE, titleY=TRUE) %>% 
+layout(title=paste("PYPL", " - ", Sys.Date()),
+       legend=list(orientation="h",
+                   xanchor="center", x = 0.5, y=1.5,
+                   font = list(size = 5),
+                   bgcolor = 'white'), showlegend=FALSE)
+
+print(plt_ts)
+
+```
+
+Data is scraped from [nasdaq.com]("http://www.nasdaq.com/symbol/pypl) using `rvest` and general data regarding the stock is filtered and put below the chart.
+```{r}
+webdata <- read_html(glue("http://www.nasdaq.com/symbol/pypl"))
+tmp <- webdata %>% 
+  html_nodes("#quotes_content_left_InfoQuotesResults .genTable table")
+  df <- html_table(tmp, fill=TRUE)[[1]]
+  out <- data.frame(c("1Y Target","50D avg vol","Market cap","P/E ratio","EPS","Beta"), c(df$X2[2],df$X2[5],df$X2[8],df$X2[9],df$X2[11],df$X2[16]))
+  colnames(out)=c("name", "value")
+print(out)
+```
+
